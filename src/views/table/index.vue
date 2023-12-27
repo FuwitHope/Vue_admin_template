@@ -4,17 +4,18 @@
       <h2>连接配置</h2>
       <el-form label-position="top">
         <el-row :gutter="20">
-          <!-- <el-col :span="8">
-              <el-form-item prop="protocol" label="Protocol">
-                <el-select
-                  v-model="connection.protocol"
-                  @change="handleProtocolChange"
-                >
-                  <el-option label="ws://" value="ws" />
-                  <el-option label="wss://" value="wss" />
-                </el-select>
-              </el-form-item>
-            </el-col> -->
+          <el-col :span="2">
+            <el-form-item prop="protocol" label="Protocol">
+              <!-- <el-select
+                v-model="connection.protocol"
+                @change="handleProtocolChange"
+              > -->
+              <el-select>
+                <el-option label="ws://" value="ws" />
+                <el-option label="wss://" value="wss" />
+              </el-select>
+            </el-form-item>
+          </el-col>
           <el-col :span="6">
             <el-form-item prop="host" label="Host">
               <el-input
@@ -30,6 +31,7 @@
               />
             </el-form-item>
           </el-col>
+
           <!-- <el-col :span="8">
               <el-form-item prop="clientId" label="Client ID">
                 <el-input placeholder="null" />
@@ -74,32 +76,45 @@
     <el-card>
       <h2>网关</h2>
       <div class="card-wrapper">
-        <el-card class="box-card">
+        <el-card class="box-card" style="width:400px;">
           <div slot="header" class="clearfix">
             <span style="font-size: 18px; font-weight: bold">网关列表</span>
             <el-button
               icon="el-icon-circle-plus-outline"
               style="float: right; padding: 3px 0"
               type="text"
-              @click="open"
+              @click="openBgw"
             >添加</el-button>
           </div>
           <div v-for="o in 2" :key="o" class="text-item">
             {{ '列表内容 ' + o }}
           </div>
-
         </el-card>
+
         <el-card class="box-card">
-          <el-descriptions class="margin-top" title="网关列表" :column="4" directsion="vertical">
-            <el-descriptions-item label="用户名">kooriookami</el-descriptions-item>
-            <el-descriptions-item label="手机号">18100000000</el-descriptions-item>
-            <el-descriptions-item label="居住地" :span="2">苏州市</el-descriptions-item>
-            <el-descriptions-item label="备注">
+          <el-descriptions class="margin-top" title="订阅列表" :column="4" direction="horizontal">
+            <el-descriptions-item label="username" :span="4">kooriookami </el-descriptions-item>
+            <el-descriptions-item label="备注" :span="2">
               <el-tag size="small">学校</el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="联系地址" />
           </el-descriptions>
         </el-card>
+
+        <el-card class="box-card">
+          <div slot="header" class="clearfix">
+            <span style="font-size: 18px; font-weight: bold">标签列表</span>
+            <el-button
+              icon="el-icon-circle-plus-outline"
+              style="float: right; padding: 3px 0"
+              type="text"
+              @click="openLabel"
+            >添加</el-button>
+          </div>
+          <div v-for="o in 1" :key="o" class="text-item">
+            {{ '列表内容 ' + o }}
+          </div>
+        </el-card>
+
       </div>
     </el-card>
 
@@ -125,6 +140,7 @@
         </el-row>
       </el-form>
     </el-card> -->
+
     <el-card>
       <h2>命令控制</h2>
       <el-form label-position="top" :model="publish" style="text-align:left">
@@ -361,17 +377,24 @@ h2 {
 // })
 
 export default {
+  // data() {
+
+  // },
+  // created() {
+
+  // },
   methods: {
-    open() {
+    openBgw() {
       this.$prompt('请输入蓝牙网关的MAC地址', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        inputPattern: /[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\w](?:[\w-]*[\w])?\.)+[\w](?:[\w-]*[\w])?/,
-        inputErrorMessage: 'MAC地址不正确'
+        inputPattern: /^\w{12}$/,
+        inputErrorMessage: 'MAC地址格式不正确'
       }).then(({ value }) => {
         this.$message({
           type: 'success',
-          message: '你的MAC地址是: ' + value
+          message: '你添加的蓝牙网关MAC地址为: ' + value
+
         })
       }).catch(() => {
         this.$message({
@@ -380,6 +403,7 @@ export default {
         })
       })
     }
+
   }
 }
 // import { getList } from '@/api/table'
