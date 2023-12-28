@@ -318,7 +318,6 @@
 </template>
 
 <style >
-
 h2 {
   font-size: 212x;
   margin-top: 0;
@@ -366,24 +365,38 @@ h2 {
 </style>
 
 <script>
-
-// import * as mqtt from 'mqtt/dist/mqtt.min'
-// import { reactive, ref } from 'vue'
-
-// // topic, QoS & payload for publishing message
-// const publish = ref({
-//   topic: 'topic/browser',
-//   payload: '{ "msg": "Hello, I am browser." }'
-// })
-
+// 获取列表数据
+import { getList } from '@/api/table'
 export default {
-  // data() {
+  filters: {
+    statusFilter(status) {
+      const statusMap = {
+        published: 'success',
+        draft: 'gray',
+        deleted: 'danger'
+      }
+      return statusMap[status]
+    }
+  },
 
-  // },
-  // created() {
+  data() {
+    return {
+      list: null,
+      listLoading: true
+    }
+  },
 
-  // },
+  created() {
+    this.fetchData()
+  },
   methods: {
+    fetchData() {
+      this.listLoading = true
+      getList().then(response => {
+        this.list = response.data.items
+        this.listLoading = false
+      })
+    },
     openBgw() {
       this.$prompt('请输入蓝牙网关的MAC地址', '提示', {
         confirmButtonText: '确定',
@@ -393,8 +406,7 @@ export default {
       }).then(({ value }) => {
         this.$message({
           type: 'success',
-          message: '你添加的蓝牙网关MAC地址为: ' + value
-
+          message: '你的蓝牙网关地址是:  ' + value
         })
       }).catch(() => {
         this.$message({
@@ -403,40 +415,6 @@ export default {
         })
       })
     }
-
   }
 }
-// import { getList } from '@/api/table'
-// export default {
-//   filters: {
-//     statusFilter(status) {
-//       const statusMap = {
-//         published: 'success',
-//         draft: 'gray',
-//         deleted: 'danger'
-//       }
-//       return statusMap[status]
-//     }
-//   },
-
-//   data() {
-//     return {
-//       list: null,
-//       listLoading: true
-//     }
-//   },
-
-//   created() {
-//     this.fetchData()
-//   },
-//   methods: {
-//     fetchData() {
-//       this.listLoading = true
-//       getList().then(response => {
-//         this.list = response.data.items
-//         this.listLoading = false
-//       })
-//     }
-//   }
-// }
 </script>
