@@ -1,3 +1,4 @@
+
 <template>
   <div class="mqtt-connect">
     <el-card>
@@ -57,8 +58,7 @@
             class="space-btn"
             icon="el-icon-caret-right"
             @click="createConnection"
-          >connect
-            <!-- {{ client.connected ? "Connected" : "Connect" }} -->
+          >Connect
           </el-button>
 
           <el-button
@@ -169,15 +169,16 @@
             </el-form-item>
           </el-col>
 
-          <el-col span="2" class="text-left ">
-            <el-button
-              type="primary"
-              class="space-btn"
-              :loading="btnLoadingType === 'publish'"
-              @click="doPublish"
-            >发送
-            </el-button>
-          </el-col>
+          <!-- <el-col class="text-left "> -->
+          <el-button
+            type="primary"
+            style="margin-right:50px"
+            class="space-btn"
+            :loading="btnLoadingType === 'publish'"
+            @click="doPublish"
+          >发送
+          </el-button>
+          <!-- </el-col> -->
 
           <!-- <el-col span="4" class="text-center" style="margin-top: 50px">
             <el-switch
@@ -190,20 +191,20 @@
               @change="handleChange"
             />
           </el-col> -->
-          <el-col span="4" class="text-center ">
-            <el-button
-              type="primary"
-              class="space-btn"
-              @click="startscan"
-            >开启扫描
-            </el-button>
-            <el-button
-              type="primary"
-              class="space-btn"
-              @click="stopscan"
-            >关闭扫描
-            </el-button>
-          </el-col>
+
+          <el-button
+            type="primary"
+            class="space-btn"
+            @click="startscan"
+          >开启扫描
+          </el-button>
+          <el-button
+            type="primary"
+            class="space-btn"
+            @click="stopscan"
+          >关闭扫描
+          </el-button>
+
           <!-- <el-button
               type="primary"
               class="space-btn"
@@ -216,19 +217,19 @@
               @click="setfilter"
             >设置过滤
             </el-button> -->
-          <el-col span="3" class="text-right">
-            <el-dropdown style="margin-top: 50px;">
-              <el-button type="primary">
-                其他指令<i class="el-icon-arrow-down el-icon--right" />
-              </el-button>
-              <el-dropdown-menu slot="dropdown">
-                <!-- <el-dropdown-item>开启扫描</el-dropdown-item> -->
-                <!-- <el-dropdown-item>关闭扫描</el-dropdown-item> -->
-                <el-dropdown-item>设置服务UUID</el-dropdown-item>
-                <el-dropdown-item>设置过滤</el-dropdown-item>
-              </el-dropdown-menu>
-            </el-dropdown>
-          </el-col>
+
+          <el-dropdown style="margin: 50px;">
+            <el-button type="primary">
+              其他指令<i class="el-icon-arrow-down el-icon--right" />
+            </el-button>
+            <el-dropdown-menu slot="dropdown">
+              <!-- <el-dropdown-item>开启扫描</el-dropdown-item> -->
+              <!-- <el-dropdown-item>关闭扫描</el-dropdown-item> -->
+              <el-dropdown-item>设置服务UUID</el-dropdown-item>
+              <el-dropdown-item>设置过滤</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+
         </el-row>
       </el-form>
     </el-card>
@@ -365,38 +366,133 @@ h2 {
 </style>
 
 <script>
-// 获取列表数据
-import { getList } from '@/api/table'
+import mqtt from 'mqtt'
 export default {
-  filters: {
-    statusFilter(status) {
-      const statusMap = {
-        published: 'success',
-        draft: 'gray',
-        deleted: 'danger'
-      }
-      return statusMap[status]
-    }
-  },
-
   data() {
     return {
-      list: null,
-      listLoading: true
+      connection: {
+        protocol: 'ws',
+        host: 'broker.emqx.io',
+        // ws: 8083; wss: 8084
+        port: 8083,
+        endpoint: '/mqtt',
+        // for more options, please refer to https://github.com/mqttjs/MQTT.js#mqttclientstreambuilder-options
+        clean: true,
+        connectTimeout: 30 * 1000, // ms
+        reconnectPeriod: 4000, // ms
+        clientId: 'emqx_vue_' + Math.random().toString(16).substring(2, 8),
+        // auth
+        username: 'emqx_test',
+        password: 'emqx_test'
+      },
+      subscription: {
+        topic: 'topic/mqttx',
+        qos: 0
+      },
+      publish: {
+        topic: 'topic/browser',
+        qos: 0,
+        payload: '{ "msg": "Hello, I am browser." }'
+      },
+      receiveNews: '',
+      qosList: [0, 1, 2],
+      client: {
+        connected: false
+      },
+      subscribeSuccess: false,
+      connecting: false,
+      retryTimes: 0
     }
   },
 
-  created() {
-    this.fetchData()
-  },
   methods: {
-    fetchData() {
-      this.listLoading = true
-      getList().then(response => {
-        this.list = response.data.items
-        this.listLoading = false
+    // 初始化数据
+    initData() {
+      this.client = {
+        connected: false
+      }
+      this.retryTimes = 0
+      this.connecting = false
+      this.subscribeSuccess = false
+    },
+    // handleOnReConnect() {
+    //   this.retryTimes += 1
+    //   if (this.retryTimes > 5) {
+    //     try {
+    //       this.client.end()
+    //       this.initData()
+    //       this.$message.error('Connection maxReconnectTimes limit, stop retry')
+    //     } catch (error) {
+    //       this.$message.error(error.toString())
+    //     }
+    //   }
+    // },
+
+    // 创建连接
+    createConnection() {
+      try {
+        this.connecting = true
+        const { protocol, host, port, endpoint, ...options } = this.connection
+        const connectUrl = `${protocol}://${host}:${port}${endpoint}`
+        this.client = mqtt.connect(connectUrl, options)
+        if (this.client.on) {
+          this.client.on('connect', () => {
+            this.connecting = false
+            console.log('Connection succeeded!')
+          })
+          this.client.on('reconnect', this.handleOnReConnect)
+          this.client.on('error', (error) => {
+            console.log('Connection failed', error)
+          })
+          this.client.on('message', (topic, message) => {
+            this.receiveNews = this.receiveNews.concat(message)
+            console.log(`Received message ${message} from topic ${topic}`)
+          })
+        }
+      } catch (error) {
+        this.connecting = false
+        console.log('mqtt.connect error', error)
+      }
+    },
+
+    // 订阅
+    doSubscribe() {
+      const { topic, qos } = this.subscription
+      this.client.subscribe(topic, { qos }, (error, res) => {
+        if (error) {
+          console.log('Subscribe to topics error', error)
+          return
+        }
+        this.subscribeSuccess = true
+        console.log('Subscribe to topics res', res)
       })
     },
+
+    // 发布
+    doPublish() {
+      const { topic, qos, payload } = this.publish
+      this.client.publish(topic, payload, { qos }, (error) => {
+        if (error) {
+          console.log('Publish error', error)
+        }
+      })
+    },
+
+    // 断开连接 
+    destroyConnection() {
+      if (this.client.connected) {
+        try {
+          this.client.end(false, () => {
+            this.initData()
+            console.log('Successfully disconnected!')
+          })
+        } catch (error) {
+          console.log('Disconnect failed', error.toString())
+        }
+      }
+    },
+
+    // 添加网关信息
     openBgw() {
       this.$prompt('请输入蓝牙网关的MAC地址', '提示', {
         confirmButtonText: '确定',

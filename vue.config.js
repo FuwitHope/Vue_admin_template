@@ -16,14 +16,19 @@ const name = defaultSettings.title || 'vue Admin Template' // page title
 const port = process.env.port || process.env.npm_config_port || 9528 // dev port
 
 // All configuration item explanations can be find in https://cli.vuejs.org/config/
-module.exports = {
-  /**
+
+// module.exports = {
+/**
    * You will need to set publicPath if you plan to deploy your site under a sub path,
    * for example GitHub Pages. If you plan to deploy your site to https://foo.github.io/bar/,
    * then publicPath should be set to "/bar/".
    * In most cases please use '/' !!!
    * Detail: https://cli.vuejs.org/config/#publicpath
    */
+
+module.exports = {
+  // 其他配置项...
+
   publicPath: '/',
   outputDir: 'dist',
   assetsDir: 'static',
@@ -38,6 +43,7 @@ module.exports = {
     },
     before: require('./mock/mock-server.js')
   },
+
   configureWebpack: {
     // provide the app's title in webpack's name field, so that
     // it can be accessed in index.html to inject the correct title.
@@ -46,6 +52,15 @@ module.exports = {
       alias: {
         '@': resolve('src')
       }
+    },
+    // it can make ES6 be transformed to ES5.
+    module: {
+      rules: [
+        {
+          test: /\.esm\.js$/,
+          loader: 'babel-loader'
+        }
+      ]
     }
   },
   chainWebpack(config) {
@@ -120,4 +135,5 @@ module.exports = {
         }
       )
   }
+
 }
